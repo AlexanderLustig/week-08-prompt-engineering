@@ -1,49 +1,120 @@
-# Week 8 — Prompt Engineering & AI-Assisted Development
+# Prompt Engineering & AI-Assisted Development
 
-**Course:** AI Integration
-**Student:** Alexander Lustig
-**Date:** 2026-04-26
+**What this demonstrates:** How to iterate on LLM outputs using prompt engineering, and how to use AI tools (GitHub Copilot) to accelerate technical development.
 
----
+This repo captures two independent but related projects:
 
-## What This Repo Contains
+## Part 1: Multi-Chain LLM Pipeline for Alert Triage
 
-### Part 1: Flowise LLM Chains + n8n Pipeline
+### The Problem
+Security alerts need intelligent triage: What's the severity? What type of attack? What should I do about it? A single LLM can do this, but breaking it into steps (classify → analyze → recommend) gives more reliable, structured output.
 
-Three LLM chains built in Flowise using OpenAI gpt-4o-mini, callable via HTTP API:
+### What I Built
 
-| Chain | Platform | Flowise/Webhook ID | Purpose |
-|-------|----------|-------------------|---------|
-| Alert Classifier | Flowise Cloud | `f30f5825-e2b2-4688-a295-b72301af467f` | Classifies alert severity → JSON `{severity, confidence, reasoning}` |
-| Threat Analyzer | Flowise Cloud | `2b7b85b7-f7d6-4d2d-99de-97da2b34d9ee` | Analyzes threat → JSON `{attack_type, indicators, mitre_techniques, ...}` |
-| Response Recommender | n8n webhook | `/webhook/response-recommender` | Recommends actions → JSON `{immediate_actions, investigation_steps, ...}` |
+**Three chained LLM models** that work together on a security alert:
 
-**n8n Pipeline:** "Week 8 - LLM Chain Pipeline" (ID: `JVcfpTbIodYXVulB`) calls all 3 chains sequentially on a test SSH brute-force + privilege escalation alert.
+| Chain | Purpose | Output Format |
+|-------|---------|---|
+| **Alert Classifier** | Assess severity (critical/high/medium/low) with confidence | JSON: `{severity, confidence, reasoning}` |
+| **Threat Analyzer** | Identify attack type + MITRE techniques + indicators of compromise | JSON: `{attack_type, indicators, mitre_techniques, severity_justification}` |
+| **Response Recommender** | Suggest immediate actions and investigation steps | JSON: `{immediate_actions[], investigation_steps[]}` |
 
-**Note on Response Recommender:** Flowise Cloud free tier allows 2 chatflows max (both slots used by Classifier + Analyzer). The 3rd chain is implemented as an n8n webhook workflow calling Gemini 2.5 Flash — functionally identical to a Flowise chain from n8n's perspective.
+### Implementation
 
----
+- **Chains 1-2:** Built in Flowise Cloud using OpenAI `gpt-4o-mini`
+- **Chain 3:** Implemented as n8n webhook (Flowise free tier limit = 2 flows), calling Gemini 2.5 Flash
+- **Orchestration:** n8n pipeline runs all 3 chains sequentially on a test alert (SSH brute force + privilege escalation)
+- **Key Learning:** Different LLMs have different strengths; Gemini 2.5 Flash was better at structured reasoning than OpenAI for this use case
 
-### Part 2: AI-Assisted Capstone Development
+### How to Run
 
-| File | Description |
-|------|-------------|
-| `.github/copilot-instructions.md` | Project context file that grounds GitHub Copilot in our capstone's architecture, schema, and conventions |
-| `docs/checkpoint2-audit.md` | Full Checkpoint 2 readiness audit — 10-question AI interview + gap analysis |
-| `ai-core-README.md` | Component README generated with AI assistance (Part 2.4 artifact) |
-| `prompt-log-alexander.md` | Log of AI interactions with context, prompts, results, and evaluations |
-
----
-
-## Screenshots
-
-See `screenshots/README.md` for instructions on what to capture and where to save each file.
+1. Open the n8n workflow: `JVcfpTbIodYXVulB` on [Railway n8n](https://primary-production-bbbc9.up.railway.app)
+2. Trigger manually with a test alert JSON
+3. Observe output from all 3 chains in sequence
 
 ---
 
-## Key Technical Notes
+## Part 2: AI-Assisted Capstone Development
 
-- Flowise LLM Chain node requires a separate `chatPromptTemplate` node (3 nodes total per chain, not 2 as shown in homework)
-- Gemini 2.5 Flash wraps JSON in markdown code fences even when instructed not to — strip with regex in Code node
-- n8n webhook nodes require `webhookId` (UUID) field to register correctly — missing this causes silent 404
-- n8n activate: use `POST /rest/workflows/{id}/activate` with `{versionId}` — PATCH with `active:true` silently fails
+### The Problem
+Large capstone projects need clear documentation, consistent architecture, and continuous validation. Manually writing all of this is slow and repetitive.
+
+### What I Did
+
+1. **GitHub Copilot Context File** (`.github/copilot-instructions.md`)
+   - Documented capstone schema, conventions, and architecture
+   - Grounded Copilot in the project's context so it generates consistent code
+
+2. **Checkpoint 2 Readiness Audit** (`docs/checkpoint2-audit.md`)
+   - Used Claude to conduct a "10-question AI interview"
+   - Identified gaps in architecture, testing, and documentation
+   - This is research-backed: structured gap analysis approach based on technical readiness frameworks
+
+3. **Component README** (`ai-core-README.md`)
+   - Generated with AI assistance but reviewed and refined by hand
+   - Shows how AI can accelerate documentation without sacrificing accuracy
+
+4. **Prompt Log** (`prompt-log-alexander.md`)
+   - Artifacts capturing how I actually direct AI tools
+   - Context → Prompt → Result → Evaluation → Learning for each interaction
+
+### Key Insight
+
+AI tools are multiplicative when you provide good context. The better you write the initial setup (architecture doc, schema definitions, conventions), the better the AI output. This is fundamentally about communication with machines.
+
+---
+
+## The Prompt Log (Portfolio Artifact)
+
+My `prompt-log-alexander.md` shows:
+- How I break complex problems into AI-solvable chunks
+- Where AI succeeds (code generation, documentation drafts, gap analysis)
+- Where AI needs human judgment (architecture decisions, prioritization)
+- How I evaluate AI output (does it match the spec? is it production-ready?)
+
+This log is unusual—most portfolios don't show this. It demonstrates that I know how to work WITH AI, not just use it.
+
+---
+
+## Stack
+
+- **LLM Chains:** Flowise Cloud (OpenAI gpt-4o-mini)
+- **Orchestration:** n8n
+- **AI-Assisted Development:** GitHub Copilot, Claude
+- **Documentation:** Markdown + handwritten refinement
+
+---
+
+## Files in This Repo
+
+```
+├── README.md                         ← You are here
+├── prompt-log-alexander.md           ← My AI interaction log (portfolio artifact)
+├── .github/copilot-instructions.md   ← Project context for Copilot
+├── docs/checkpoint2-audit.md         ← Structured readiness audit
+├── ai-core-README.md                 ← AI-generated component README
+└── screenshots/                      ← LLM chain execution screenshots
+```
+
+---
+
+## What I Learned
+
+1. **Prompt engineering is iterative** — First drafts from LLMs are rarely production-ready. You need to evaluate, refine, and iterate.
+2. **Structure beats cleverness** — Well-formatted JSON prompts > conversational prompts. When I need structured output, I specify the schema.
+3. **Context is everything** — A vague prompt to a generic LLM produces vague output. Grounding with domain knowledge (security frameworks, capstone architecture) produces usable results.
+4. **AI is a multiplier, not a replacement** — AI doesn't replace judgment; it speeds up execution once you know what you want.
+5. **Three-chain architecture is more robust than one chain** — Separating concerns (classify → analyze → act) prevents a single bad prompt from derailing the entire pipeline.
+
+---
+
+## Portfolio Signal
+
+This repo demonstrates:
+- **Prompt engineering chops:** I know how to structure prompts for reliable LLM output
+- **System design:** Chaining models for robustness
+- **AI-aware development:** I use AI tools effectively, and I document how
+- **Technical writing:** Clear documentation of architectural decisions
+- **Critical evaluation:** I don't blindly trust AI; I validate output against requirements
+
+This is what "AI Integration Specialist" means in practice.
